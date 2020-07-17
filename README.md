@@ -4,7 +4,7 @@ These are my solutions to the projects in the [Nand2Tetris](https://www.nand2tet
 
 :white_check_mark: Project 01: Boolean Logic
 
-:black_square_button: Project 02: Boolean Arithmetic
+:white_check_mark: Project 02: Boolean Arithmetic
 
 :black_square_button: Project 03: Sequential Logic
 
