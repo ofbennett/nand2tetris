@@ -6,7 +6,7 @@ These are my solutions to the projects in the [Nand2Tetris](https://www.nand2tet
 
 :white_check_mark: Project 02: Boolean Arithmetic
 
-:black_square_button: Project 03: Sequential Logic
+:white_check_mark: Project 03: Sequential Logic
 
 :black_square_button: Project 04: Machine Language
 
