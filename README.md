@@ -10,7 +10,7 @@ These are my solutions to the projects in the [Nand2Tetris](https://www.nand2tet
 
 :white_check_mark: Project 04: Machine Language
 
-:black_square_button: Project 05: Computer Architecture
+:white_check_mark: Project 05: Computer Architecture
 
 :black_square_button: Project 06: Assembler
 
