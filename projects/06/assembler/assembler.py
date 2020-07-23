@@ -1,6 +1,7 @@
 import sys
 from code import Code
 from parser import Parser
+from symbolTable import SymbolTable
 from os import path
 
 filePath = sys.argv[1]
@@ -11,22 +12,23 @@ hackFile = open(fileName.split(".")[0] + ".hack", "w")
 
 parser = Parser(sourceFile)
 code = Code()
+symbolTable = SymbolTable()
 
 parser.removeCommentsAndWhiteSpace()
+parser.processLabels(symbolTable) # First pass
 
+# Second pass
 while parser.hasMoreCommands():
     parser.advance()
     commandType = parser.commandType()
-    if commandType == "L_COMMAND":
-        symbol = parser.symbol()
-        # Add label to symbol table
-
-    elif commandType == "A_COMMAND":
+    if commandType == "A_COMMAND":
         symbol = parser.symbol()
         if symbol.isnumeric():
             address = "{0:015b}".format(int(symbol))
         else:
-            pass # Use symbol table
+            if not symbolTable.contains(symbol):
+                symbolTable.addVariable(symbol)
+            address = "{0:015b}".format(int(symbolTable.getAddress(symbol)))
         aCode = "0" + address
         hackFile.write(aCode)
         hackFile.write("\n")
@@ -41,5 +43,3 @@ while parser.hasMoreCommands():
 
 sourceFile.close()
 hackFile.close()
-
-# print(parser.commandsWithLables)

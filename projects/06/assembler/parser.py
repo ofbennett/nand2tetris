@@ -18,12 +18,24 @@ class Parser:
                 self.commandNum += 1
         del self.rawLines
     
+    def processLabels(self, symbolTable):
+        currentIndex = 0
+        for com in self.commandsWithLables:
+            self.currentCommand = com
+            if self.commandType() == "L_COMMAND":
+                symbol = self.currentCommand[1:-1]
+                symbolTable.addEntry(symbol, currentIndex)
+            else:
+                currentIndex += 1
+                self.commandsWithoutLables.append(self.currentCommand)
+        self.commandNum = currentIndex
+    
     def hasMoreCommands(self):
         return self.currentCommandIndex + 1 < self.commandNum
 
     def advance(self):
         self.currentCommandIndex += 1
-        self.currentCommand = self.commandsWithLables[self.currentCommandIndex]
+        self.currentCommand = self.commandsWithoutLables[self.currentCommandIndex]
 
     def commandType(self):
         com = self.currentCommand
