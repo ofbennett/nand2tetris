@@ -13,7 +13,7 @@ class CodeWriter:
             asm += "A=A-1\n"
             asm += "M=-M\n"
         
-        if command == "not":
+        elif command == "not":
             asm += "@SP\n"
             asm += "A=M\n"
             asm += "A=A-1\n"
