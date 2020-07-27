@@ -12,15 +12,11 @@ sourceFile = open(fullPath, "r")
 asmFile = open(pathToDir + "/" + fileName.split(".")[0] + ".asm", "w")
 
 parser = Parser()
-codeWriter = CodeWriter(asmFile)
+codeWriter = CodeWriter(asmFile, fileName.split(".")[0])
 
-n=1
 for line in sourceFile:
-    # if n > 42:
-    #     break
     line = parser.removeComments(line)
     if line == "":
-        n+=1
         continue
     command = line
     comType = parser.commandType(command)
@@ -31,7 +27,6 @@ for line in sourceFile:
         segment = parser.arg1(command)
         index = parser.arg2(command)
         codeWriter.writePushPop(pushPop, segment, index)
-    n+=1
 
 sourceFile.close()
 asmFile.close()

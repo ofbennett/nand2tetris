@@ -1,9 +1,10 @@
 from collections import Counter
 
 class CodeWriter:
-    def __init__(self, asmFile):
+    def __init__(self, asmFile, fileName):
         self.asmFile = asmFile
         self.prevArithCommands = Counter()
+        self.fileName = fileName
 
     def writeArithmetic(self, command):
         asm = ""
@@ -202,5 +203,89 @@ class CodeWriter:
                 asm += "M=D\n"
                 asm += "@SP\n"
                 asm += "M=M+1\n"
+            elif segment in ["local", "argument", "this", "that"]:
+                if segment == "local":
+                    asm += "@LCL\n"
+                elif segment =="argument":
+                    asm += "@ARG\n"
+                elif segment =="this":
+                    asm += "@THIS\n"
+                elif segment =="that":
+                    asm += "@THAT\n"
+                asm += "A=M\n"
+                asm += "D=A\n"
+                asm += f"@{index}\n"
+                asm += "A=A+D\n"
+                asm += "D=M\n"
+                asm += "@SP\n"
+                asm += "A=M\n"
+                asm += "M=D\n"
+                asm += "@SP\n"
+                asm += "M=M+1\n"
+            elif segment in ["temp", "pointer"]:
+                if segment == "temp":
+                    RIndex = int(index) + 5
+                elif segment == "pointer":
+                    RIndex = int(index) + 3
+                asm += f"@{RIndex}\n"
+                asm += "D=M\n"
+                asm += "@SP\n"
+                asm += "A=M\n"
+                asm += "M=D\n"
+                asm += "@SP\n"
+                asm += "M=M+1\n"
+            elif segment == "static":
+                varName = self.fileName  + "." + index
+                asm += f"@{varName}\n"
+                asm += "D=M\n"
+                asm += "@SP\n"
+                asm += "A=M\n"
+                asm += "M=D\n"
+                asm += "@SP\n"
+                asm += "M=M+1\n"
+                
+        elif command == "pop":
+            if segment in ["local", "argument", "this", "that"]:
+                if segment == "local":
+                    asm += "@LCL\n"
+                elif segment =="argument":
+                    asm += "@ARG\n"
+                elif segment =="this":
+                    asm += "@THIS\n"
+                elif segment =="that":
+                    asm += "@THAT\n"
+                asm += "A=M\n"
+                asm += "D=A\n"
+                asm += f"@{index}\n"
+                asm += "D=A+D\n"
+                asm += "@R13\n"
+                asm += "M=D\n"
+                asm += "@SP\n"
+                asm += "M=M-1\n"
+                asm += "A=M\n"
+                asm += "D=M\n"
+                asm += "@R13\n"
+                asm += "A=M\n"
+                asm += "M=D\n"
+            elif segment in ["temp", "pointer"]:
+                if segment == "temp":
+                    RIndex = int(index) + 5
+                elif segment == "pointer":
+                    RIndex = int(index) + 3
+                asm += "@SP\n"
+                asm += "M=M-1\n"
+                asm += "A=M\n"
+                asm += "D=M\n"
+                asm += f"@{RIndex}\n"
+                asm += "M=D\n"
+            elif segment == "static":
+                varName = self.fileName  + "." + index
+                asm += "@SP\n"
+                asm += "M=M-1\n"
+                asm += "A=M\n"
+                asm += "D=M\n"
+                asm += f"@{varName}\n"
+                asm += "M=D\n"
+
         self.asmFile.write(asm)
                 
