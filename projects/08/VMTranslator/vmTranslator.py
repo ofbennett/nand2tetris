@@ -27,6 +27,16 @@ for line in sourceFile:
         segment = parser.arg1(command)
         index = parser.arg2(command)
         codeWriter.writePushPop(pushPop, segment, index)
+    elif comType == "C_LABEL":
+        label = parser.arg1(command)
+        codeWriter.writeLabel(label)
+    elif comType == "C_GOTO":
+        label = parser.arg1(command)
+        codeWriter.writeGoto(label)
+    elif comType == "C_IF":
+        label = parser.arg1(command)
+        codeWriter.writeIf(label)
+
 
 sourceFile.close()
 asmFile.close()

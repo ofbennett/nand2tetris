@@ -288,4 +288,34 @@ class CodeWriter:
                 asm += "M=D\n"
 
         self.asmFile.write(asm)
+    
+    def writeInit(self):
+        pass
+
+    def writeLabel(self, label):
+        asm = f"({label})\n"
+        self.asmFile.write(asm)
+
+    def writeGoto(self, label):
+        asm = f"@{label}\n"
+        asm += "0;JMP\n"
+        self.asmFile.write(asm)
+
+    def writeIf(self, label):
+        asm = "@SP\n"
+        asm += "M=M-1\n"
+        asm += "A=M\n"
+        asm += "D=M\n"
+        asm += f"@{label}\n"
+        asm += "D;JNE\n"
+        self.asmFile.write(asm)
+
+    def writeCall(self, funcName, numArgs):
+        pass
+
+    def writeReturn(self):
+        pass
+
+    def writeFunction(self, funcName, numLocals):
+        pass
                 
