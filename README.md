@@ -14,7 +14,7 @@ These are my solutions to the projects in the [Nand2Tetris](https://www.nand2tet
 
 :white_check_mark: Project 06: Assembler
 
-:black_square_button: Project 07: VM I: Stack Arithmetic
+:white_check_mark: Project 07: VM I: Stack Arithmetic
 
 :black_square_button: Project 08: VM II: Program Control
 
