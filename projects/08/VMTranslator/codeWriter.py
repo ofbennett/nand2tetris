@@ -1,10 +1,12 @@
 from collections import Counter
 
 class CodeWriter:
-    def __init__(self, asmFile, fileName):
+    def __init__(self, asmFile):
         self.asmFile = asmFile
         self.prevArithCommands = Counter()
-        self.fileName = fileName
+        self.returnCount = 0
+        self.currentFuncName = ["init"]
+        self.fileName = None
 
     def writeArithmetic(self, command):
         asm = ""
@@ -290,32 +292,150 @@ class CodeWriter:
         self.asmFile.write(asm)
     
     def writeInit(self):
-        pass
+        asm = "@256\n"
+        asm += "D=A\n"
+        asm += "@SP\n"
+        asm += "M=D\n"
+        self.asmFile.write(asm)
+        self.writeCall("Sys.init", 0)
 
     def writeLabel(self, label):
-        asm = f"({label})\n"
+        funcName = self.currentFuncName[-1]
+        asm = f"({funcName}${label})\n"
         self.asmFile.write(asm)
 
     def writeGoto(self, label):
-        asm = f"@{label}\n"
+        funcName = self.currentFuncName[-1]
+        asm = f"@{funcName}${label}\n"
         asm += "0;JMP\n"
         self.asmFile.write(asm)
 
     def writeIf(self, label):
+        funcName = self.currentFuncName[-1]
         asm = "@SP\n"
         asm += "M=M-1\n"
         asm += "A=M\n"
         asm += "D=M\n"
-        asm += f"@{label}\n"
+        asm += f"@{funcName}${label}\n"
         asm += "D;JNE\n"
         self.asmFile.write(asm)
 
     def writeCall(self, funcName, numArgs):
-        pass
+        self.returnCount += 1
+        returnAddress = f"{funcName}.return{self.returnCount}"
+        asm = f"@{returnAddress}\n"
+        asm += "D=A\n"
+        asm += "@SP\n"
+        asm += "A=M\n"
+        asm += "M=D\n"
+        asm += "@SP\n"
+        asm += "M=M+1\n"
+
+        asm += "@LCL\n"
+        asm += "D=M\n"
+        asm += "@SP\n"
+        asm += "A=M\n"
+        asm += "M=D\n"
+        asm += "@SP\n"
+        asm += "M=M+1\n"
+
+        asm += "@ARG\n"
+        asm += "D=M\n"
+        asm += "@SP\n"
+        asm += "A=M\n"
+        asm += "M=D\n"
+        asm += "@SP\n"
+        asm += "M=M+1\n"
+
+        asm += "@THIS\n"
+        asm += "D=M\n"
+        asm += "@SP\n"
+        asm += "A=M\n"
+        asm += "M=D\n"
+        asm += "@SP\n"
+        asm += "M=M+1\n"
+
+        asm += "@THAT\n"
+        asm += "D=M\n"
+        asm += "@SP\n"
+        asm += "A=M\n"
+        asm += "M=D\n"
+        asm += "@SP\n"
+        asm += "M=M+1\n"
+
+        asm += "@SP\n"
+        asm += "D=M\n"
+        asm += "@LCL\n"
+        asm += "M=D\n"
+        asm += "@5\n"
+        asm += "D=D-A\n"
+        asm += f"@{numArgs}\n"
+        asm += "D=D-A\n"
+        asm += "@ARG\n"
+        asm += "M=D\n"
+        asm += f"@{funcName}\n"
+        asm += "0;JMP\n"
+        asm += f"({returnAddress})\n"
+        self.asmFile.write(asm)
 
     def writeReturn(self):
-        pass
+        # self.currentFuncName.pop()
+        asm = "@LCL\n"
+        asm += "D=M\n"
+        asm += "@FRAME\n"
+        asm += "M=D\n"
+        asm += "@5\n"
+        asm += "D=D-A\n"
+        asm += "A=D\n"
+        asm += "D=M\n"
+        asm += "@RET\n"
+        asm += "M=D\n"
+        self.asmFile.write(asm)
+        self.writePushPop("pop", "argument", 0)
+        asm = "@ARG\n"
+        asm += "D=M\n"
+        asm += "@SP\n"
+        asm += "M=D+1\n"
+
+        asm += "@FRAME\n"
+        asm += "A=M-1\n"
+        asm += "D=M\n"
+        asm += "@THAT\n"
+        asm += "M=D\n"
+
+        asm += "@FRAME\n"
+        asm += "A=M-1\n"
+        asm += "A=A-1\n"
+        asm += "D=M\n"
+        asm += "@THIS\n"
+        asm += "M=D\n"
+
+        asm += "@FRAME\n"
+        asm += "A=M-1\n"
+        asm += "A=A-1\n"
+        asm += "A=A-1\n"
+        asm += "D=M\n"
+        asm += "@ARG\n"
+        asm += "M=D\n"
+
+        asm += "@FRAME\n"
+        asm += "A=M-1\n"
+        asm += "A=A-1\n"
+        asm += "A=A-1\n"
+        asm += "A=A-1\n"
+        asm += "D=M\n"
+        asm += "@LCL\n"
+        asm += "M=D\n"
+
+        asm += "@RET\n"
+        asm += "A=M\n"
+        asm += "0;JMP\n"
+        self.asmFile.write(asm)
 
     def writeFunction(self, funcName, numLocals):
-        pass
+        self.currentFuncName.append(funcName)
+        asm = f"({funcName})\n"
+        self.asmFile.write(asm)
+        for _ in range(int(numLocals)):
+            self.writePushPop("push", "constant", 0)
                 
