@@ -5,3 +5,4 @@ __pycache__
 .vscode
 projects/07/*/*/*.asm
 projects/08/*/*/*.asm
+projects/09/*/*.vm

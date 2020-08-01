@@ -1,0 +1,126 @@
+class Game {
+    field Grid grid;
+    field int currentPlayer;
+
+    constructor Game new(){
+        let grid = Grid.new();
+        let currentPlayer = 1;
+        return this;
+    }
+
+    method void init(){
+        do Draw.grid();
+        return;
+    }
+
+    method void nextMove(){
+        var char letter;
+        var boolean validSelection;
+        let validSelection = false;
+        if (currentPlayer=1){
+            do Output.printString("Player X to move...");
+            do Output.println();
+            while (~validSelection){
+                let letter = Keyboard.readChar();
+                do Output.backSpace();
+                let validSelection = grid.checkLetter(letter);
+            }
+
+            if (letter = 81){
+                do grid.addx(0,0);
+                do Draw.x(0,0);
+            }
+            if (letter = 87){
+                do grid.addx(0,1);
+                do Draw.x(0,1);
+            }
+            if (letter = 69){
+                do grid.addx(0,2);
+                do Draw.x(0,2);
+            }
+            if (letter = 65){
+                do grid.addx(1,0);
+                do Draw.x(1,0);
+            }
+            if (letter = 83){
+                do grid.addx(1,1);
+                do Draw.x(1,1);
+            }
+            if (letter = 68){
+                do grid.addx(1,2);
+                do Draw.x(1,2);
+            }
+            if (letter = 90){
+                do grid.addx(2,0);
+                do Draw.x(2,0);
+            }
+            if (letter = 88){
+                do grid.addx(2,1);
+                do Draw.x(2,1);
+            }
+            if (letter = 67){
+                do grid.addx(2,2);
+                do Draw.x(2,2);
+            }
+            let currentPlayer = -currentPlayer;
+        } else {
+            do Output.printString("Player O to move...");
+            do Output.println();
+            while (~validSelection){
+                let letter = Keyboard.readChar();
+                do Output.backSpace();
+                let validSelection = grid.checkLetter(letter);
+            }
+
+            if (letter = 81){
+                do grid.addo(0,0);
+                do Draw.o(0,0);
+            }
+            if (letter = 87){
+                do grid.addo(0,1);
+                do Draw.o(0,1);
+            }
+            if (letter = 69){
+                do grid.addo(0,2);
+                do Draw.o(0,2);
+            }
+            if (letter = 65){
+                do grid.addo(1,0);
+                do Draw.o(1,0);
+            }
+            if (letter = 83){
+                do grid.addo(1,1);
+                do Draw.o(1,1);
+            }
+            if (letter = 68){
+                do grid.addo(1,2);
+                do Draw.o(1,2);
+            }
+            if (letter = 90){
+                do grid.addo(2,0);
+                do Draw.o(2,0);
+            }
+            if (letter = 88){
+                do grid.addo(2,1);
+                do Draw.o(2,1);
+            }
+            if (letter = 67){
+                do grid.addo(2,2);
+                do Draw.o(2,2);
+            }
+            let currentPlayer = -currentPlayer;
+        }
+        return;
+    }
+
+    method int won(){
+        var int result;
+        let result = grid.checkWin();
+        if (grid.checkGridFull() & (result = 0)){
+            return 2;
+        } else {
+            return result;
+        }
+    }
+
+}

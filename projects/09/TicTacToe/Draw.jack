@@ -1,0 +1,25 @@
+class Draw {
+
+    function void grid(){
+        do Screen.drawLine(200,100,350,100);
+        do Screen.drawLine(200,150,350,150);
+        do Screen.drawLine(250,50,250,200);
+        do Screen.drawLine(300,50,300,200);
+        return;
+    }
+
+    function void o(int row, int col){
+        do Screen.drawCircle(225+(50*col),75+(50*row),12);
+        do Screen.setColor(false);
+        do Screen.drawCircle(225+(50*col),75+(50*row),11);
+        do Screen.setColor(true);
+        return;
+    }
+
+    function void x(int row, int col){
+        do Screen.drawLine(215+(50*col),65+(50*row),235+(50*col),85+(50*row));
+        do Screen.drawLine(235+(50*col),65+(50*row),215+(50*col),85+(50*row));
+        return;
+    }
+
+}

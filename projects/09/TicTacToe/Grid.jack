@@ -1,0 +1,189 @@
+class Grid {
+    field Array row0;
+    field Array row1;
+    field Array row2;
+    field Array rows;
+
+    constructor Grid new(){
+        let row0 = Array.new(3);
+        let row1 = Array.new(3);
+        let row2 = Array.new(3);
+        let rows = Array.new(3);
+        let rows[0] = row0;
+        let rows[1] = row1;
+        let rows[2] = row2;
+        return this;
+    }
+
+    method void printState(){
+        var int n;
+        var Array row;
+        let n = 0;
+        while (n < 3) {
+            let row = rows[n];
+            do Output.printInt(row[0]);
+            do Output.printInt(row[1]);
+            do Output.printInt(row[2]);
+            do Output.println();
+            let n = n + 1;
+        }
+        return;
+    }
+
+    method void addx(int row, int col){
+        var Array selectedRow;
+        let selectedRow = rows[row];
+        let selectedRow[col] = 1;
+        return;
+    }
+
+    method void addo(int row, int col){
+        var Array selectedRow;
+        let selectedRow = rows[row];
+        let selectedRow[col] = -1;
+        return;
+    }
+
+    method int checkValue(int row, int col){
+        var int value;
+        var Array selectedRow;
+        let selectedRow = rows[row];
+        let value = selectedRow[col];
+        return value;
+    }
+
+    method boolean checkLetter(char letter){
+        var int result;
+        let result = 2;
+        if (letter = 81){
+            let result = checkValue(0,0);
+        }
+        if (letter = 87){
+            let result = checkValue(0,1);
+        }
+        if (letter = 69){
+            let result = checkValue(0,2);
+        }
+        if (letter = 65){
+            let result = checkValue(1,0);
+        }
+        if (letter = 83){
+            let result = checkValue(1,1);
+        }
+        if (letter = 68){
+            let result = checkValue(1,2);
+        }
+        if (letter = 90){
+            let result = checkValue(2,0);
+        }
+        if (letter = 88){
+            let result = checkValue(2,1);
+        }
+        if (letter = 67){
+            let result = checkValue(2,2);
+        }
+        if (result=0){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    method int checkWin(){
+        var int n;
+        var int sum;
+        var Array row;
+
+        // Check rows for win
+        let n = 0;
+        let sum = 0;
+        while (n < 3) {
+            let row = rows[n];
+            let sum = sum + row[0];
+            let sum = sum + row[1];
+            let sum = sum + row[2];
+            if (sum = 3){
+                return 1;
+            }
+            if (sum = -3){
+                return -1;
+            }
+            let n = n + 1;
+        }
+
+        // Check cols for win
+        let n = 0;
+        let sum = 0;
+        while (n < 3) {
+            let row = rows[0];
+            let sum = sum + row[n];
+            let row = rows[1];
+            let sum = sum + row[n];
+            let row = rows[2];
+            let sum = sum + row[n];
+            if (sum = 3){
+                return 1;
+            }
+            if (sum = -3){
+                return -1;
+            }
+            let n = n + 1;
+        }
+
+        // Check diags for win
+        let sum = 0;
+        let row = rows[0];
+        let sum = sum + row[0];
+        let row = rows[1];
+        let sum = sum + row[1];
+        let row = rows[2];
+        let sum = sum + row[2];
+        if (sum = 3){
+            return 1;
+        }
+        if (sum = -3){
+            return -1;
+        }
+
+        let sum = 0;
+        let row = rows[0];
+        let sum = sum + row[2];
+        let row = rows[1];
+        let sum = sum + row[1];
+        let row = rows[2];
+        let sum = sum + row[0];
+        if (sum = 3){
+            return 1;
+        }
+        if (sum = -3){
+            return -1;
+        }
+
+        return 0;
+    }
+
+    method boolean checkGridFull(){
+        var int n;
+        var Array row;
+        var int sum;
+        let n = 0;
+        while (n < 3) {
+            let row = rows[n];
+            if (row[0]=0){
+                let sum = sum + 1;
+            }
+            if (row[1]=0){
+                let sum = sum + 1;
+            }
+            if (row[2]=0){
+                let sum = sum + 1;
+            }
+            let n = n + 1;
+        }
+        if (sum=0){
+            return true;
+        } else {
+            return false;
+        }
+    }
+}

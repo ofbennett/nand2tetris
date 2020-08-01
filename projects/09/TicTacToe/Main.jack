@@ -1,0 +1,34 @@
+class Main {
+   function void main() {
+
+      var Game game;
+      var int winner;
+
+      do Output.printString("Welcome to Tic Tac Toe!");
+      do Output.println();
+      do Output.printString("Press any key to begin");
+      do Keyboard.readChar();
+      do Screen.clearScreen();
+      
+      let game = Game.new();
+      do game.init();
+      while (game.won()=0){
+         do game.nextMove();
+      }
+
+      let winner = game.won();
+      if (winner=1){
+         do Output.printString("Player X wins");
+         return;
+      } 
+      if (winner=-1){
+         do Output.printString("Player O wins");
+         return;
+      }
+      if (winner=2){
+         do Output.printString("Stalement");
+         return;
+      }
+      return;
+   }
+}
