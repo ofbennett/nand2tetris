@@ -18,7 +18,7 @@ These are my solutions to the projects in the [Nand2Tetris](https://www.nand2tet
 
 :white_check_mark: Project 08: VM II: Program Control
 
-:black_square_button: Project 09: High-Level Language
+:white_check_mark: Project 09: High-Level Language
 
 :black_square_button: Project 10: Compiler I: Syntax Analysis
 
