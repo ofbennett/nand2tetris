@@ -15,7 +15,7 @@ class JackTokenizer:
         for line in self.file.readlines():
             if withinComment:
                 line = line.strip()
-                if len(line) > 2:
+                if len(line) > 1:
                     if line[-2:] == "*/":
                         withinComment = False
                         continue
@@ -27,7 +27,7 @@ class JackTokenizer:
             if len(commentSplit) > 1:
                 withinComment = True
                 comment = commentSplit[1].strip()
-                if len(comment) > 2:
+                if len(comment) > 1:
                     if comment[-2:] == "*/":
                         withinComment = False
             if len(line) == 0:
@@ -83,25 +83,42 @@ class JackTokenizer:
 
 
     def hasMoreTokens(self):
-        return len(self.tokenQueue) == 0
+        return len(self.tokenQueue) > 0
 
     def advance(self):
-        pass
+        self.tokenQueue.popleft()
 
     def tokenType(self):
-        pass
+        keywords = {"class", "constructor", "function", "method", "field", "static", "var", "int", "char", "boolean", "void", "true", "false", "null", "this", "let", "do", "if", "else", "while", "return"}
+        symbols = {"{", "}", "(", ")", "[", "]", ".", ",", ";", "+", "-", "*", "/", "&", "|", "<", ">", "=", "~"}
+        numbers = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
+        tok = self.tokenQueue[0]
+        if tok in symbols:
+            return "SYMBOL"
+        elif tok in keywords:
+            return "KEYWORD"
+        elif tok[0] == '"':
+            return "STRING_CONST"
+        elif tok[0] in numbers:
+            return "INT_CONST"
+        else:
+            return "IDENTIFIER"
 
     def keyWord(self):
-        pass
+        return self.tokenQueue[0]
 
     def symbol(self):
-        pass
+        symbolDict = {"<": "&lt;",">": "&gt;","&": "&amp;"}
+        tok = self.tokenQueue[0]
+        if tok in symbolDict.keys():
+            tok = symbolDict[tok]
+        return tok
 
     def identifier(self):
-        pass
+        return self.tokenQueue[0]
 
     def intVal(self):
-        pass
+        return self.tokenQueue[0]
 
     def stringVal(self):
-        pass
+        return self.tokenQueue[0][1:-1]
