@@ -7,8 +7,6 @@ class JackTokenizer:
         self.tokenQueue = deque()
         self._removeComments()
         self._tokenizeLines()
-        # print(self.decommentedCode)
-        # print(self.tokenQueue)
 
     def _removeComments(self):
         withinComment = False

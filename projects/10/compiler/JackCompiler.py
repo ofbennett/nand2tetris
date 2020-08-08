@@ -17,8 +17,7 @@ resultDir = dirPath + resultDirName + "/"
 if not path.isdir(resultDir):
     mkdir(resultDir)
 
-# comp = CompilationEngine()
-
+# Produce tokenized ...T.xml files
 for f in sourceFilesFullPath:
     fileName = path.basename(f)
     sourceFile = open(f, "r")
@@ -45,3 +44,14 @@ for f in sourceFilesFullPath:
     tokFile.write("</tokens>")
     sourceFile.close()
     tokFile.close()
+
+# Produce parsed .xml files
+for f in sourceFilesFullPath:
+    fileName = path.basename(f)
+    sourceFile = open(f, "r")
+    parsedFile = open(resultDir + fileName.split(".")[0] + ".xml", "w")
+    tokenizer = JackTokenizer(sourceFile)
+    comp = CompilationEngine()
+
+    sourceFile.close()
+    parsedFile.close()
