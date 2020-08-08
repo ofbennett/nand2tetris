@@ -50,8 +50,8 @@ for f in sourceFilesFullPath:
     fileName = path.basename(f)
     sourceFile = open(f, "r")
     parsedFile = open(resultDir + fileName.split(".")[0] + ".xml", "w")
-    tokenizer = JackTokenizer(sourceFile)
-    comp = CompilationEngine()
+    comp = CompilationEngine(sourceFile, parsedFile)
+    comp.compileClass()
 
     sourceFile.close()
     parsedFile.close()
