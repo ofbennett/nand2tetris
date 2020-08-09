@@ -1,7 +1,7 @@
 from JackTokenizer import JackTokenizer
 
 class CompilationEngine:
-    ops = set(["+", "-", "*", "/", "&", "|", "<", ">", "="])
+    ops = set(["+", "-", "*", "/", "&amp;", "|", "&lt;", "&gt;", "="])
     tokTypeDict = {"KEYWORD": "keyword", "SYMBOL": "symbol", "IDENTIFIER": "identifier", "INT_CONST": "integerConstant", "STRING_CONST": "stringConstant"}
 
     def __init__(self, sourceFile, parsedFile):
@@ -22,7 +22,6 @@ class CompilationEngine:
         elif tokType == "STRING_CONST":
             tok = self.tokenizer.stringVal()
         self.parsedFile.write(tok)
-        # print(tok)
         self.parsedFile.write(f" </{CompilationEngine.tokTypeDict[tokType]}>\n")
         self.tokenizer.advance()
 
@@ -197,19 +196,58 @@ class CompilationEngine:
 
     def compileExpression(self, endTokens):
         self.parsedFile.write("<expression>\n")
+        self.compileTerm()
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() in endTokens:
                     break
-                if self.tokenizer.symbol() in CompilationEngine.ops:
+                elif self.tokenizer.symbol() in CompilationEngine.ops:
                     self.writeTerminal()
-            self.compileTerm()
+                else:
+                    self.compileTerm()
+            else:
+                self.compileTerm()
         self.parsedFile.write("</expression>\n")
 
     def compileTerm(self):
         self.parsedFile.write("<term>\n")
-        self.writeTerminal()
+        if self.tokenizer.tokenType() == "SYMBOL":
+            if self.tokenizer.symbol() in ["-", "~"]:
+                 self.writeTerminal()
+                 self.compileTerm()
+            elif self.tokenizer.symbol() == "(":
+                self.writeTerminal()
+                self.compileExpression(endTokens = [")"])
+                self.writeTerminal()
+        elif self.tokenizer.tokenType() in ["KEYWORD", "STRING_CONST", "INT_CONST"]:
+            self.writeTerminal()
+        elif self.tokenizer.tokenType() == "IDENTIFIER":
+            if self.tokenizer.lookAheadOne() in ["(","."]:
+                self.compileSubroutineCall()
+            elif self.tokenizer.lookAheadOne() == "[":
+                self.writeTerminal()
+                self.writeTerminal()
+                self.compileExpression(endTokens = ["]"])
+                self.writeTerminal()
+            else:
+                self.writeTerminal()
         self.parsedFile.write("</term>\n")
+
+    def compileSubroutineCall(self):
+        self.writeTerminal()
+        if self.tokenizer.tokenType() == "SYMBOL":
+            if self.tokenizer.symbol() == "(":
+                self.writeTerminal()
+                self.compileExpressionList()
+                self.writeTerminal()
+            elif self.tokenizer.symbol() == ".":
+                self.writeTerminal()
+                self.writeTerminal()
+                self.writeTerminal()
+                self.compileExpressionList()
+                self.writeTerminal()
+            else:
+                raise Exception("Should never reach here")
 
     def compileExpressionList(self):
         self.parsedFile.write("<expressionList>\n")

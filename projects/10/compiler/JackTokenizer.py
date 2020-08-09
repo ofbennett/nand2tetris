@@ -120,3 +120,6 @@ class JackTokenizer:
 
     def stringVal(self):
         return self.tokenQueue[0][1:-1]
+    
+    def lookAheadOne(self):
+        return self.tokenQueue[1]
