@@ -1,14 +1,16 @@
 from JackTokenizer import JackTokenizer
 
 class CompilationEngine:
+    ops = set(["+", "-", "*", "/", "&", "|", "<", ">", "="])
+    tokTypeDict = {"KEYWORD": "keyword", "SYMBOL": "symbol", "IDENTIFIER": "identifier", "INT_CONST": "integerConstant", "STRING_CONST": "stringConstant"}
+
     def __init__(self, sourceFile, parsedFile):
         self.parsedFile = parsedFile
         self.tokenizer = JackTokenizer(sourceFile)
 
     def writeTerminal(self):
-        tokTypeDict = {"KEYWORD": "keyword", "SYMBOL": "symbol", "IDENTIFIER": "identifier", "INT_CONST": "integerConstant", "STRING_CONST": "stringConstant"}
         tokType = self.tokenizer.tokenType()
-        self.parsedFile.write(f"<{tokTypeDict[tokType]}> ")
+        self.parsedFile.write(f"<{CompilationEngine.tokTypeDict[tokType]}> ")
         if tokType == "KEYWORD":
             tok = self.tokenizer.keyWord()
         elif tokType == "SYMBOL":
@@ -20,7 +22,8 @@ class CompilationEngine:
         elif tokType == "STRING_CONST":
             tok = self.tokenizer.stringVal()
         self.parsedFile.write(tok)
-        self.parsedFile.write(f" </{tokTypeDict[tokType]}>\n")
+        # print(tok)
+        self.parsedFile.write(f" </{CompilationEngine.tokTypeDict[tokType]}>\n")
         self.tokenizer.advance()
 
     def compileClass(self):
@@ -29,9 +32,12 @@ class CompilationEngine:
             if self.tokenizer.tokenType() == "KEYWORD":
                 if self.tokenizer.keyWord() in ["static", "field"]:
                     self.compileClassVarDec()
-                if self.tokenizer.keyWord() in ["constructor", "function", "method"]:
+                elif self.tokenizer.keyWord() in ["constructor", "function", "method"]:
                     self.compileSubroutine()
-            self.writeTerminal()
+                else:
+                    self.writeTerminal()    
+            else:
+                self.writeTerminal()
         self.parsedFile.write("</class>")
 
     def compileClassVarDec(self):
@@ -53,17 +59,20 @@ class CompilationEngine:
                     self.compileParameterList()
                     self.writeTerminal()
                     self.parsedFile.write("<subroutineBody>\n")
-            if self.tokenizer.tokenType() == "KEYWORD":
+                elif self.tokenizer.symbol() == "}":
+                    self.writeTerminal()
+                    break
+                else:    
+                    self.writeTerminal()
+            elif self.tokenizer.tokenType() == "KEYWORD":
                 if self.tokenizer.keyWord() == "var":
                     self.compileVarDec()
-            if self.tokenizer.tokenType() == "KEYWORD":
-                if self.tokenizer.keyWord() in ["let", "if", "while", "do", "return"]:
+                elif self.tokenizer.keyWord() in ["let", "if", "while", "do", "return"]:
                     self.compileStatements()
-            if self.tokenizer.tokenType() == "SYMBOL":
-                if self.tokenizer.symbol() == "}":
+                else:    
                     self.writeTerminal()
-                    break     
-            self.writeTerminal()
+            else:    
+                self.writeTerminal()
         self.parsedFile.write("</subroutineBody>\n")
         self.parsedFile.write("</subroutineDec>\n")
 
@@ -106,25 +115,109 @@ class CompilationEngine:
         self.parsedFile.write("</statements>\n")
 
     def compileDo(self):
-        pass
+        self.parsedFile.write("<doStatement>\n")
+        while True:
+            if self.tokenizer.tokenType() == "SYMBOL":
+                if self.tokenizer.symbol() == "(":
+                    self.writeTerminal()
+                    self.compileExpressionList()
+                    self.writeTerminal()
+                if self.tokenizer.symbol() == ";":
+                    self.writeTerminal()
+                    break
+            self.writeTerminal()
+        self.parsedFile.write("</doStatement>\n")
 
     def compileLet(self):
-        pass
+        self.parsedFile.write("<letStatement>\n")
+        while True:
+            if self.tokenizer.tokenType() == "SYMBOL":
+                if self.tokenizer.symbol() == "[":
+                    self.writeTerminal()
+                    self.compileExpression(endTokens = ["]"])
+                    self.writeTerminal()
+                if self.tokenizer.symbol() == "=":
+                    self.writeTerminal()
+                    self.compileExpression(endTokens = [";"])
+                if self.tokenizer.symbol() == ";":
+                    self.writeTerminal()
+                    break
+            self.writeTerminal()
+        self.parsedFile.write("</letStatement>\n")
 
     def compileWhile(self):
-        pass
+        self.parsedFile.write("<whileStatement>\n")
+        while True:
+            if self.tokenizer.tokenType() == "SYMBOL":
+                if self.tokenizer.symbol() == "(":
+                    self.writeTerminal()
+                    self.compileExpression(endTokens = [")"])
+                    self.writeTerminal()
+                if self.tokenizer.symbol() == "{":
+                    self.writeTerminal()
+                    self.compileStatements()
+                    self.writeTerminal()
+                    break
+            self.writeTerminal()
+        self.parsedFile.write("</whileStatement>\n")
 
     def compileReturn(self):
-        pass
+        self.parsedFile.write("<returnStatement>\n")
+        self.writeTerminal()
+        if self.tokenizer.tokenType() == "SYMBOL":
+            if self.tokenizer.symbol() == ";":
+                self.writeTerminal()
+                self.parsedFile.write("</returnStatement>\n")
+                return
+        self.compileExpression(endTokens = [";"])
+        self.writeTerminal()
+        self.parsedFile.write("</returnStatement>\n")
 
     def compileIf(self):
-        pass
+        self.parsedFile.write("<ifStatement>\n")
+        while True:
+            if self.tokenizer.tokenType() == "SYMBOL":
+                if self.tokenizer.symbol() == "(":
+                    self.writeTerminal()
+                    self.compileExpression(endTokens = [")"])
+                    self.writeTerminal()
+                if self.tokenizer.symbol() == "{":
+                    self.writeTerminal()
+                    self.compileStatements()
+                    self.writeTerminal()
+                    if self.tokenizer.tokenType() == "KEYWORD":
+                        if self.tokenizer.symbol() == "else":
+                            continue
+                        else:
+                            break
+                    else:
+                        break
+            self.writeTerminal()
+        self.parsedFile.write("</ifStatement>\n")
 
-    def CompileExpression(self):
-        pass
+    def compileExpression(self, endTokens):
+        self.parsedFile.write("<expression>\n")
+        while True:
+            if self.tokenizer.tokenType() == "SYMBOL":
+                if self.tokenizer.symbol() in endTokens:
+                    break
+                if self.tokenizer.symbol() in CompilationEngine.ops:
+                    self.writeTerminal()
+            self.compileTerm()
+        self.parsedFile.write("</expression>\n")
 
-    def CompileTerm(self):
-        pass
+    def compileTerm(self):
+        self.parsedFile.write("<term>\n")
+        self.writeTerminal()
+        self.parsedFile.write("</term>\n")
 
-    def CompileExpressionList(self):
-        pass
+    def compileExpressionList(self):
+        self.parsedFile.write("<expressionList>\n")
+        while True:
+            if self.tokenizer.tokenType() == "SYMBOL":
+                if self.tokenizer.symbol() == ",":
+                    self.writeTerminal()
+                if self.tokenizer.symbol() == ")":
+                    break
+            self.compileExpression(endTokens = [",",")"])
+        self.parsedFile.write("</expressionList>\n")
