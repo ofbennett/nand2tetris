@@ -4,13 +4,13 @@ class CompilationEngine:
     ops = set(["+", "-", "*", "/", "&amp;", "|", "&lt;", "&gt;", "="])
     tokTypeDict = {"KEYWORD": "keyword", "SYMBOL": "symbol", "IDENTIFIER": "identifier", "INT_CONST": "integerConstant", "STRING_CONST": "stringConstant"}
 
-    def __init__(self, sourceFile, parsedFile):
-        self.parsedFile = parsedFile
+    def __init__(self, sourceFile, parseTreeFile):
+        self.parseTreeFile = parseTreeFile
         self.tokenizer = JackTokenizer(sourceFile)
 
     def writeTerminal(self):
         tokType = self.tokenizer.tokenType()
-        self.parsedFile.write(f"<{CompilationEngine.tokTypeDict[tokType]}> ")
+        self.parseTreeFile.write(f"<{CompilationEngine.tokTypeDict[tokType]}> ")
         if tokType == "KEYWORD":
             tok = self.tokenizer.keyWord()
         elif tokType == "SYMBOL":
@@ -21,12 +21,12 @@ class CompilationEngine:
             tok = self.tokenizer.intVal()
         elif tokType == "STRING_CONST":
             tok = self.tokenizer.stringVal()
-        self.parsedFile.write(tok)
-        self.parsedFile.write(f" </{CompilationEngine.tokTypeDict[tokType]}>\n")
+        self.parseTreeFile.write(tok)
+        self.parseTreeFile.write(f" </{CompilationEngine.tokTypeDict[tokType]}>\n")
         self.tokenizer.advance()
 
     def compileClass(self):
-        self.parsedFile.write("<class>\n")
+        self.parseTreeFile.write("<class>\n")
         while self.tokenizer.hasMoreTokens():
             if self.tokenizer.tokenType() == "KEYWORD":
                 if self.tokenizer.keyWord() in ["static", "field"]:
@@ -37,27 +37,27 @@ class CompilationEngine:
                     self.writeTerminal()    
             else:
                 self.writeTerminal()
-        self.parsedFile.write("</class>")
+        self.parseTreeFile.write("</class>")
 
     def compileClassVarDec(self):
-        self.parsedFile.write("<classVarDec>\n")
+        self.parseTreeFile.write("<classVarDec>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ";":
                     self.writeTerminal()
                     break
             self.writeTerminal()
-        self.parsedFile.write("</classVarDec>\n")
+        self.parseTreeFile.write("</classVarDec>\n")
 
     def compileSubroutine(self):
-        self.parsedFile.write("<subroutineDec>\n")
+        self.parseTreeFile.write("<subroutineDec>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "(":
                     self.writeTerminal()
                     self.compileParameterList()
                     self.writeTerminal()
-                    self.parsedFile.write("<subroutineBody>\n")
+                    self.parseTreeFile.write("<subroutineBody>\n")
                 elif self.tokenizer.symbol() == "}":
                     self.writeTerminal()
                     break
@@ -72,30 +72,30 @@ class CompilationEngine:
                     self.writeTerminal()
             else:    
                 self.writeTerminal()
-        self.parsedFile.write("</subroutineBody>\n")
-        self.parsedFile.write("</subroutineDec>\n")
+        self.parseTreeFile.write("</subroutineBody>\n")
+        self.parseTreeFile.write("</subroutineDec>\n")
 
     def compileParameterList(self):
-        self.parsedFile.write("<parameterList>\n")
+        self.parseTreeFile.write("<parameterList>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ")":
                     break
             self.writeTerminal()
-        self.parsedFile.write("</parameterList>\n")
+        self.parseTreeFile.write("</parameterList>\n")
 
     def compileVarDec(self):
-        self.parsedFile.write("<varDec>\n")
+        self.parseTreeFile.write("<varDec>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ";":
                     self.writeTerminal()
                     break
             self.writeTerminal()
-        self.parsedFile.write("</varDec>\n")
+        self.parseTreeFile.write("</varDec>\n")
 
     def compileStatements(self):
-        self.parsedFile.write("<statements>\n")
+        self.parseTreeFile.write("<statements>\n")
         while True:
             if self.tokenizer.tokenType() == "KEYWORD":
                 if self.tokenizer.keyWord() == "let":
@@ -111,10 +111,10 @@ class CompilationEngine:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "}":
                     break
-        self.parsedFile.write("</statements>\n")
+        self.parseTreeFile.write("</statements>\n")
 
     def compileDo(self):
-        self.parsedFile.write("<doStatement>\n")
+        self.parseTreeFile.write("<doStatement>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "(":
@@ -125,10 +125,10 @@ class CompilationEngine:
                     self.writeTerminal()
                     break
             self.writeTerminal()
-        self.parsedFile.write("</doStatement>\n")
+        self.parseTreeFile.write("</doStatement>\n")
 
     def compileLet(self):
-        self.parsedFile.write("<letStatement>\n")
+        self.parseTreeFile.write("<letStatement>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "[":
@@ -142,10 +142,10 @@ class CompilationEngine:
                     self.writeTerminal()
                     break
             self.writeTerminal()
-        self.parsedFile.write("</letStatement>\n")
+        self.parseTreeFile.write("</letStatement>\n")
 
     def compileWhile(self):
-        self.parsedFile.write("<whileStatement>\n")
+        self.parseTreeFile.write("<whileStatement>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "(":
@@ -158,22 +158,22 @@ class CompilationEngine:
                     self.writeTerminal()
                     break
             self.writeTerminal()
-        self.parsedFile.write("</whileStatement>\n")
+        self.parseTreeFile.write("</whileStatement>\n")
 
     def compileReturn(self):
-        self.parsedFile.write("<returnStatement>\n")
+        self.parseTreeFile.write("<returnStatement>\n")
         self.writeTerminal()
         if self.tokenizer.tokenType() == "SYMBOL":
             if self.tokenizer.symbol() == ";":
                 self.writeTerminal()
-                self.parsedFile.write("</returnStatement>\n")
+                self.parseTreeFile.write("</returnStatement>\n")
                 return
         self.compileExpression(endTokens = [";"])
         self.writeTerminal()
-        self.parsedFile.write("</returnStatement>\n")
+        self.parseTreeFile.write("</returnStatement>\n")
 
     def compileIf(self):
-        self.parsedFile.write("<ifStatement>\n")
+        self.parseTreeFile.write("<ifStatement>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "(":
@@ -192,10 +192,10 @@ class CompilationEngine:
                     else:
                         break
             self.writeTerminal()
-        self.parsedFile.write("</ifStatement>\n")
+        self.parseTreeFile.write("</ifStatement>\n")
 
     def compileExpression(self, endTokens):
-        self.parsedFile.write("<expression>\n")
+        self.parseTreeFile.write("<expression>\n")
         self.compileTerm()
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
@@ -207,10 +207,10 @@ class CompilationEngine:
                     self.compileTerm()
             else:
                 self.compileTerm()
-        self.parsedFile.write("</expression>\n")
+        self.parseTreeFile.write("</expression>\n")
 
     def compileTerm(self):
-        self.parsedFile.write("<term>\n")
+        self.parseTreeFile.write("<term>\n")
         if self.tokenizer.tokenType() == "SYMBOL":
             if self.tokenizer.symbol() in ["-", "~"]:
                  self.writeTerminal()
@@ -231,7 +231,7 @@ class CompilationEngine:
                 self.writeTerminal()
             else:
                 self.writeTerminal()
-        self.parsedFile.write("</term>\n")
+        self.parseTreeFile.write("</term>\n")
 
     def compileSubroutineCall(self):
         self.writeTerminal()
@@ -250,7 +250,7 @@ class CompilationEngine:
                 raise Exception("Should never reach here")
 
     def compileExpressionList(self):
-        self.parsedFile.write("<expressionList>\n")
+        self.parseTreeFile.write("<expressionList>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ",":
@@ -258,4 +258,4 @@ class CompilationEngine:
                 if self.tokenizer.symbol() == ")":
                     break
             self.compileExpression(endTokens = [",",")"])
-        self.parsedFile.write("</expressionList>\n")
+        self.parseTreeFile.write("</expressionList>\n")

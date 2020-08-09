@@ -4,7 +4,7 @@ from glob import glob
 from JackTokenizer import JackTokenizer
 from CompilationEngine import CompilationEngine
 
-resultDirName = "intermediateFiles"
+debugDirName = "debugXMLFiles"
 
 tokTypeDict = {"KEYWORD": "keyword", "SYMBOL": "symbol", "IDENTIFIER": "identifier", "INT_CONST": "integerConstant", "STRING_CONST": "stringConstant"}
 
@@ -13,15 +13,15 @@ baseName = path.basename(dirPath[:-1])
 sourceFiles = glob(dirPath+"*.jack")
 sourceFilesFullPath = [path.abspath(f) for f in sourceFiles]
 
-resultDir = dirPath + resultDirName + "/"
-if not path.isdir(resultDir):
-    mkdir(resultDir)
+debugDir = dirPath + debugDirName + "/"
+if not path.isdir(debugDir):
+    mkdir(debugDir)
 
 # Produce tokenized ...T.xml files
 for f in sourceFilesFullPath:
     fileName = path.basename(f)
     sourceFile = open(f, "r")
-    tokFile = open(resultDir + fileName.split(".")[0] + "T.xml", "w")
+    tokFile = open(debugDir + fileName.split(".")[0] + "T.xml", "w")
     tokenizer = JackTokenizer(sourceFile)
     tokFile.write("<tokens>\n")
     while tokenizer.hasMoreTokens():
@@ -49,9 +49,9 @@ for f in sourceFilesFullPath:
 for f in sourceFilesFullPath:
     fileName = path.basename(f)
     sourceFile = open(f, "r")
-    parsedFile = open(resultDir + fileName.split(".")[0] + ".xml", "w")
-    comp = CompilationEngine(sourceFile, parsedFile)
+    parseTreeXMLFile = open(debugDir + fileName.split(".")[0] + ".xml", "w")
+    comp = CompilationEngine(sourceFile, parseTreeXMLFile)
     comp.compileClass()
 
     sourceFile.close()
-    parsedFile.close()
+    parseTreeXMLFile.close()
