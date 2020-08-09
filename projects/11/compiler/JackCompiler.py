@@ -7,7 +7,6 @@ from CompilationEngine import CompilationEngine
 debugDirName = "debugXMLFiles"
 
 dirPath = sys.argv[1]
-baseName = path.basename(dirPath[:-1])
 sourceFiles = glob(dirPath+"*.jack")
 sourceFilesFullPath = [path.abspath(f) for f in sourceFiles]
 
