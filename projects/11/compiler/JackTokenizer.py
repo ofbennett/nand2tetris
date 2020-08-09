@@ -31,6 +31,7 @@ class JackTokenizer:
             if len(line) == 0:
                 continue
             self.decommentedCode += line
+        self.file.seek(0)
 
     def _tokenizeLines(self):
         keywords = {"class", "constructor", "function", "method", "field", "static", "var", "int", "char", "boolean", "void", "true", "false", "null", "this", "let", "do", "if", "else", "while", "return"}

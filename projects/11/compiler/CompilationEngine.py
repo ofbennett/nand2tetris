@@ -4,9 +4,33 @@ class CompilationEngine:
     ops = set(["+", "-", "*", "/", "&amp;", "|", "&lt;", "&gt;", "="])
     tokTypeDict = {"KEYWORD": "keyword", "SYMBOL": "symbol", "IDENTIFIER": "identifier", "INT_CONST": "integerConstant", "STRING_CONST": "stringConstant"}
 
-    def __init__(self, sourceFile, parseTreeFile):
+    def __init__(self, sourceFile, tokenFile, parseTreeFile):
+        self.sourceFile = sourceFile
+        self.tokenFile = tokenFile
         self.parseTreeFile = parseTreeFile
         self.tokenizer = JackTokenizer(sourceFile)
+        self._createDebugTokenXML()
+
+    def _createDebugTokenXML(self):
+        debugTokenizer = JackTokenizer(self.sourceFile)
+        self.tokenFile.write("<tokens>\n")
+        while debugTokenizer.hasMoreTokens():
+            tokType = debugTokenizer.tokenType()
+            self.tokenFile.write(f"<{CompilationEngine.tokTypeDict[tokType]}> ")
+            if tokType == "KEYWORD":
+                tok = debugTokenizer.keyWord()
+            elif tokType == "SYMBOL":
+                tok = debugTokenizer.symbol()
+            elif tokType == "IDENTIFIER":
+                tok = debugTokenizer.identifier()
+            elif tokType == "INT_CONST":
+                tok = debugTokenizer.intVal()
+            elif tokType == "STRING_CONST":
+                tok = debugTokenizer.stringVal()
+            self.tokenFile.write(tok)
+            self.tokenFile.write(f" </{CompilationEngine.tokTypeDict[tokType]}>\n")
+            debugTokenizer.advance()
+        self.tokenFile.write("</tokens>")
 
     def writeTerminal(self):
         tokType = self.tokenizer.tokenType()
