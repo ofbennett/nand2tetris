@@ -1,4 +1,5 @@
 from JackTokenizer import JackTokenizer
+from SymbolTable import SymbolTable
 
 class CompilationEngine:
     ops = set(["+", "-", "*", "/", "&amp;", "|", "&lt;", "&gt;", "="])
@@ -10,6 +11,7 @@ class CompilationEngine:
         self.parseTreeFile = parseTreeFile
         self.tokenizer = JackTokenizer(sourceFile)
         self._createDebugTokenXML()
+        self.symbolTable = SymbolTable()
 
     def _createDebugTokenXML(self):
         debugTokenizer = JackTokenizer(self.sourceFile)
@@ -32,7 +34,8 @@ class CompilationEngine:
             debugTokenizer.advance()
         self.tokenFile.write("</tokens>")
 
-    def writeTerminal(self):
+    def writeTerminal(self, defined = False):
+        extraInfo = ""
         tokType = self.tokenizer.tokenType()
         self.parseTreeFile.write(f"<{CompilationEngine.tokTypeDict[tokType]}> ")
         if tokType == "KEYWORD":
@@ -41,11 +44,16 @@ class CompilationEngine:
             tok = self.tokenizer.symbol()
         elif tokType == "IDENTIFIER":
             tok = self.tokenizer.identifier()
+            extraInfo = f".{self.symbolTable.typeOf(tok)}.{self.symbolTable.kindOf(tok)}.{self.symbolTable.indexOf(tok)}"
+            if defined:
+                extraInfo += ".defined"
+            else:
+                extraInfo += ".used"
         elif tokType == "INT_CONST":
             tok = self.tokenizer.intVal()
         elif tokType == "STRING_CONST":
             tok = self.tokenizer.stringVal()
-        self.parseTreeFile.write(tok)
+        self.parseTreeFile.write(tok + extraInfo)
         self.parseTreeFile.write(f" </{CompilationEngine.tokTypeDict[tokType]}>\n")
         self.tokenizer.advance()
 
@@ -64,16 +72,24 @@ class CompilationEngine:
         self.parseTreeFile.write("</class>")
 
     def compileClassVarDec(self):
+        kind = self.tokenizer.keyWord().upper()
+        varType = self.tokenizer.lookAheadOne()
         self.parseTreeFile.write("<classVarDec>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ";":
                     self.writeTerminal()
                     break
-            self.writeTerminal()
+            if self.tokenizer.tokenType() == "IDENTIFIER":
+                name = self.tokenizer.identifier()
+                self.symbolTable.define(name, varType, kind)
+                self.writeTerminal(defined=True)
+            else:
+                self.writeTerminal()
         self.parseTreeFile.write("</classVarDec>\n")
 
     def compileSubroutine(self):
+        self.symbolTable.startSubroutine()
         self.parseTreeFile.write("<subroutineDec>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
@@ -101,21 +117,44 @@ class CompilationEngine:
 
     def compileParameterList(self):
         self.parseTreeFile.write("<parameterList>\n")
+        kind = "ARG"
+        n = 1
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ")":
                     break
-            self.writeTerminal()
+            if n%3 == 1:
+                if self.tokenizer.tokenType() == "KEYWORD":
+                    varType = self.tokenizer.keyWord()
+                    self.writeTerminal()
+                else:
+                    varType = self.tokenizer.identifier()
+                    self.writeTerminal()
+            elif n%3 == 2:
+                name = self.tokenizer.identifier()
+                self.symbolTable.define(name, varType, kind)
+                self.writeTerminal(defined=True)
+            elif n%3 == 0:
+                self.writeTerminal()
+                n = 0
+            n += 1 
         self.parseTreeFile.write("</parameterList>\n")
 
     def compileVarDec(self):
         self.parseTreeFile.write("<varDec>\n")
+        kind = "VAR"
+        varType = self.tokenizer.lookAheadOne()
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ";":
                     self.writeTerminal()
                     break
-            self.writeTerminal()
+            if self.tokenizer.tokenType() == "IDENTIFIER":
+                name = self.tokenizer.identifier()
+                self.symbolTable.define(name, varType, kind)
+                self.writeTerminal(defined=True)
+            else:
+                self.writeTerminal()
         self.parseTreeFile.write("</varDec>\n")
 
     def compileStatements(self):
