@@ -19,9 +19,11 @@ for f in sourceFilesFullPath:
     sourceFile = open(f, "r")
     tokXMLFile = open(debugDir + fileName.split(".")[0] + "T.xml", "w")
     parseTreeXMLFile = open(debugDir + fileName.split(".")[0] + ".xml", "w")
-    comp = CompilationEngine(sourceFile, tokXMLFile, parseTreeXMLFile)
+    vmFile = open(dirPath + fileName.split(".")[0] + ".vm", "w")
+    comp = CompilationEngine(sourceFile, tokXMLFile, parseTreeXMLFile, vmFile)
     comp.compileClass()
 
     sourceFile.close()
     tokXMLFile.close()
     parseTreeXMLFile.close()
+    vmFile.close()

@@ -1,33 +1,44 @@
 class VMWriter:
-    def __init__(self):
-        pass
 
-    def writePush(self):
-        pass
+    segDict = {"CONST":"constant", "ARG":"argument", "LOCAL":"local", "STATIC":"static", "THIS":"this", "THAT":"that", "POINTER":"pointer", "TEMP":"temp"}
 
-    def writePop(self):
-        pass
+    def __init__(self, vmFile):
+        self.vmFile = vmFile
 
-    def writeArithmetic(self):
-        pass
+    def writePush(self, segment, index):
+        seg = VMWriter.segDict[segment]
+        command = f"push {seg} {index}"
+        self.vmFile.write(command)
 
-    def writeLabel(self):
-        pass
+    def writePop(self, segment, index):
+        seg = VMWriter.segDict[segment]
+        command = f"pop {seg} {index}"
+        self.vmFile.write(command)
 
-    def writeGoto(self):
-        pass
+    def writeArithmetic(self, command):
+        command = command.lower()
+        self.vmFile.write(command)
 
-    def writeIf(self):
-        pass
+    def writeLabel(self, label):
+        command = f"({label})"
+        self.vmFile.write(command)
 
-    def writeCall(self):
-        pass
+    def writeGoto(self, label):
+        command = f"goto {label}"
+        self.vmFile.write(command)
 
-    def writeFunction(self):
-        pass
+    def writeIf(self, label):
+        command = f"if-goto {label}"
+        self.vmFile.write(command)
+
+    def writeCall(self, name, nArgs):
+        command = f"call {name} {nArgs}"
+        self.vmFile.write(command)
+
+    def writeFunction(self, name, nLocals):
+        command = f"function {name} {nLocals}"
+        self.vmFile.write(command)
 
     def writeReturn(self):
-        pass
-
-    def close(self):
-        pass
+        command = "return"
+        self.vmFile.write(command)

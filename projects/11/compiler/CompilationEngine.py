@@ -1,17 +1,20 @@
 from JackTokenizer import JackTokenizer
 from SymbolTable import SymbolTable
+from VMWriter import VMWriter
 
 class CompilationEngine:
     ops = set(["+", "-", "*", "/", "&amp;", "|", "&lt;", "&gt;", "="])
     tokTypeDict = {"KEYWORD": "keyword", "SYMBOL": "symbol", "IDENTIFIER": "identifier", "INT_CONST": "integerConstant", "STRING_CONST": "stringConstant"}
 
-    def __init__(self, sourceFile, tokenFile, parseTreeFile):
+    def __init__(self, sourceFile, tokenFile, parseTreeFile, vmFile):
         self.sourceFile = sourceFile
         self.tokenFile = tokenFile
         self.parseTreeFile = parseTreeFile
+        self.vmFile = vmFile
         self.tokenizer = JackTokenizer(sourceFile)
         self._createDebugTokenXML()
         self.symbolTable = SymbolTable()
+        self.vmWriter = VMWriter(vmFile)
 
     def _createDebugTokenXML(self):
         debugTokenizer = JackTokenizer(self.sourceFile)
@@ -44,11 +47,14 @@ class CompilationEngine:
             tok = self.tokenizer.symbol()
         elif tokType == "IDENTIFIER":
             tok = self.tokenizer.identifier()
-            extraInfo = f".{self.symbolTable.typeOf(tok)}.{self.symbolTable.kindOf(tok)}.{self.symbolTable.indexOf(tok)}"
-            if defined:
-                extraInfo += ".defined"
+            if self.symbolTable.typeOf(tok) == "NONE":
+                extraInfo = ".classOrSubroutine"
             else:
-                extraInfo += ".used"
+                extraInfo = f".{self.symbolTable.typeOf(tok)}.{self.symbolTable.kindOf(tok)}.{self.symbolTable.indexOf(tok)}"
+                if defined:
+                    extraInfo += ".defined"
+                else:
+                    extraInfo += ".used"
         elif tokType == "INT_CONST":
             tok = self.tokenizer.intVal()
         elif tokType == "STRING_CONST":
