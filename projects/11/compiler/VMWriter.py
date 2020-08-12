@@ -7,38 +7,37 @@ class VMWriter:
 
     def writePush(self, segment, index):
         seg = VMWriter.segDict[segment]
-        command = f"push {seg} {index}"
+        command = f"push {seg} {index}\n"
         self.vmFile.write(command)
 
     def writePop(self, segment, index):
         seg = VMWriter.segDict[segment]
-        command = f"pop {seg} {index}"
+        command = f"pop {seg} {index}\n"
         self.vmFile.write(command)
 
     def writeArithmetic(self, command):
-        command = command.lower()
-        self.vmFile.write(command)
+        self.vmFile.write(command + "\n")
 
     def writeLabel(self, label):
-        command = f"({label})"
+        command = f"({label})\n"
         self.vmFile.write(command)
 
     def writeGoto(self, label):
-        command = f"goto {label}"
+        command = f"goto {label}\n"
         self.vmFile.write(command)
 
     def writeIf(self, label):
-        command = f"if-goto {label}"
+        command = f"if-goto {label}\n"
         self.vmFile.write(command)
 
     def writeCall(self, name, nArgs):
-        command = f"call {name} {nArgs}"
+        command = f"call {name} {nArgs}\n"
         self.vmFile.write(command)
 
     def writeFunction(self, name, nLocals):
-        command = f"function {name} {nLocals}"
+        command = f"function {name} {nLocals}\n"
         self.vmFile.write(command)
 
     def writeReturn(self):
-        command = "return"
+        command = "return\n"
         self.vmFile.write(command)
