@@ -1,6 +1,6 @@
 class VMWriter:
 
-    segDict = {"CONST":"constant", "ARG":"argument", "LOCAL":"local", "STATIC":"static", "THIS":"this", "THAT":"that", "POINTER":"pointer", "TEMP":"temp"}
+    segDict = {"CONST":"constant", "ARG":"argument", "VAR":"local", "STATIC":"static", "THIS":"this", "THAT":"that", "POINTER":"pointer", "TEMP":"temp"}
 
     def __init__(self, vmFile):
         self.vmFile = vmFile
@@ -19,7 +19,7 @@ class VMWriter:
         self.vmFile.write(command + "\n")
 
     def writeLabel(self, label):
-        command = f"({label})\n"
+        command = f"label {label}\n"
         self.vmFile.write(command)
 
     def writeGoto(self, label):

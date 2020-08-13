@@ -4,7 +4,7 @@ from VMWriter import VMWriter
 
 class CompilationEngine:
     ops = set(["+", "-", "*", "/", "&amp;", "|", "&lt;", "&gt;", "="])
-    vmOps = {"+": "add", "-": "sub", "*": "call Math.multiply 2", "/": "call Math.divide 2", "&amp;": "and", "|": "or", "&lt;": "lt", "&gt;": "gt"}
+    vmOps = {"+": "add", "-": "sub", "*": "call Math.multiply 2", "/": "call Math.divide 2", "&amp;": "and", "|": "or", "&lt;": "lt", "&gt;": "gt", "=": "eq"}
     tokTypeDict = {"KEYWORD": "keyword", "SYMBOL": "symbol", "IDENTIFIER": "identifier", "INT_CONST": "integerConstant", "STRING_CONST": "stringConstant"}
 
     def __init__(self, sourceFile, tokenFile, parseTreeFile, vmFile):
@@ -16,6 +16,8 @@ class CompilationEngine:
         self._createDebugTokenXML()
         self.symbolTable = SymbolTable()
         self.vmWriter = VMWriter(vmFile)
+        self.nWhile = 0
+        self.nIf = 0
 
     def _createDebugTokenXML(self):
         debugTokenizer = JackTokenizer(self.sourceFile)
@@ -119,8 +121,8 @@ class CompilationEngine:
                     self.writeTerminal()
             elif self.tokenizer.tokenType() == "KEYWORD":
                 if self.tokenizer.keyWord() == "var":
-                    nLocals += 1
-                    self.compileVarDec()
+                    nNewLocals = self.compileVarDec()
+                    nLocals += nNewLocals
                 elif self.tokenizer.keyWord() in ["let", "if", "while", "do", "return"]:
                     if not nLocalsCompiled:
                         if self.funcType == "method":
@@ -164,6 +166,7 @@ class CompilationEngine:
         self.parseTreeFile.write("</parameterList>\n")
 
     def compileVarDec(self):
+        nNewVars = 0
         self.parseTreeFile.write("<varDec>\n")
         kind = "VAR"
         varType = self.tokenizer.lookAheadOne()
@@ -175,10 +178,12 @@ class CompilationEngine:
             if self.tokenizer.tokenType() == "IDENTIFIER":
                 name = self.tokenizer.identifier()
                 self.symbolTable.define(name, varType, kind)
+                nNewVars += 1
                 self.writeTerminal(defined=True)
             else:
                 self.writeTerminal()
         self.parseTreeFile.write("</varDec>\n")
+        return nNewVars
 
     def compileStatements(self):
         self.parseTreeFile.write("<statements>\n")
@@ -215,10 +220,14 @@ class CompilationEngine:
             funcName += self.tokenizer.identifier()
             self.writeTerminal()
         self.vmWriter.writeCall(funcName, nArgs)
+        self.vmWriter.writePop("TEMP", 0)
         self.parseTreeFile.write("</doStatement>\n")
 
     def compileLet(self):
         self.parseTreeFile.write("<letStatement>\n")
+        self.writeTerminal()
+        kind = self.symbolTable.kindOf(self.tokenizer.identifier())
+        index = self.symbolTable.indexOf(self.tokenizer.identifier())
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "[":
@@ -232,22 +241,30 @@ class CompilationEngine:
                     self.writeTerminal()
                     break
             self.writeTerminal()
+        self.vmWriter.writePop(kind, index)
         self.parseTreeFile.write("</letStatement>\n")
 
     def compileWhile(self):
+        self.nWhile += 1
+        nWhile = self.nWhile
         self.parseTreeFile.write("<whileStatement>\n")
+        self.vmWriter.writeLabel("whileStart" + str(nWhile))
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "(":
                     self.writeTerminal()
                     self.compileExpression(endTokens = [")"])
                     self.writeTerminal()
+                    self.vmWriter.writeArithmetic("not")
+                    self.vmWriter.writeIf("whileEnd" + str(nWhile))
                 if self.tokenizer.symbol() == "{":
                     self.writeTerminal()
                     self.compileStatements()
                     self.writeTerminal()
+                    self.vmWriter.writeGoto("whileStart" + str(nWhile))
                     break
             self.writeTerminal()
+        self.vmWriter.writeLabel("whileEnd" + str(nWhile))
         self.parseTreeFile.write("</whileStatement>\n")
 
     def compileReturn(self):
@@ -261,29 +278,38 @@ class CompilationEngine:
                 self.parseTreeFile.write("</returnStatement>\n")
                 return
         self.compileExpression(endTokens = [";"])
+        self.vmWriter.writeReturn()
         self.writeTerminal()
         self.parseTreeFile.write("</returnStatement>\n")
 
     def compileIf(self):
+        self.nIf += 1
+        nIf = self.nIf
         self.parseTreeFile.write("<ifStatement>\n")
+        
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "(":
                     self.writeTerminal()
                     self.compileExpression(endTokens = [")"])
                     self.writeTerminal()
+                    self.vmWriter.writeArithmetic("not")
+                    self.vmWriter.writeIf("elseStart" + str(nIf))
                 if self.tokenizer.symbol() == "{":
                     self.writeTerminal()
                     self.compileStatements()
                     self.writeTerminal()
                     if self.tokenizer.tokenType() == "KEYWORD":
                         if self.tokenizer.symbol() == "else":
+                            self.vmWriter.writeGoto("ifElseEnd" + str(nIf))
+                            self.vmWriter.writeLabel("elseStart" + str(nIf))
                             continue
                         else:
                             break
                     else:
                         break
             self.writeTerminal()
+        self.vmWriter.writeLabel("ifElseEnd" + str(nIf))
         self.parseTreeFile.write("</ifStatement>\n")
 
     def compileExpression(self, endTokens):
@@ -302,7 +328,7 @@ class CompilationEngine:
                     self.compileTerm()
             else:
                 self.compileTerm()
-        for vmOp in vmOpArray:
+        for vmOp in reversed(vmOpArray):
             self.vmWriter.writeArithmetic(vmOp)
         self.parseTreeFile.write("</expression>\n")
 
@@ -310,15 +336,31 @@ class CompilationEngine:
         self.parseTreeFile.write("<term>\n")
         if self.tokenizer.tokenType() == "SYMBOL":
             if self.tokenizer.symbol() in ["-", "~"]:
-                 self.writeTerminal()
-                 self.compileTerm()
+                unaryOp = self.tokenizer.symbol()
+                self.writeTerminal()
+                self.compileTerm()
+                if unaryOp == "-":
+                    self.vmWriter.writeArithmetic("neg")
+                elif unaryOp == "~":
+                    self.vmWriter.writeArithmetic("not")
             elif self.tokenizer.symbol() == "(":
                 self.writeTerminal()
                 self.compileExpression(endTokens = [")"])
                 self.writeTerminal()
         elif self.tokenizer.tokenType() in ["KEYWORD", "STRING_CONST", "INT_CONST"]:
-            # Need to deal with string and keyword cases here as well
-            self.vmWriter.writePush("CONST", self.tokenizer.intVal())
+            # Need to deal with string cases here as well
+            if self.tokenizer.tokenType() == "INT_CONST":
+                self.vmWriter.writePush("CONST", self.tokenizer.intVal())
+            if self.tokenizer.tokenType() == "KEYWORD":
+                if self.tokenizer.keyWord() in ["false", "null"]:
+                    self.vmWriter.writePush("CONST", 0)
+                elif self.tokenizer.keyWord() == "true":
+                    self.vmWriter.writePush("CONST", 1)
+                    self.vmWriter.writeArithmetic("neg")
+                elif self.tokenizer.keyWord() == "this":
+                    self.vmWriter.writePush("THIS", 0)
+                else:
+                    raise Exception("Should never reach here")
             self.writeTerminal()
         elif self.tokenizer.tokenType() == "IDENTIFIER":
             if self.tokenizer.lookAheadOne() in ["(","."]:
@@ -329,24 +371,32 @@ class CompilationEngine:
                 self.compileExpression(endTokens = ["]"])
                 self.writeTerminal()
             else:
+                kind = self.symbolTable.kindOf(self.tokenizer.identifier())
+                index = self.symbolTable.indexOf(self.tokenizer.identifier())
+                self.vmWriter.writePush(kind, index)
                 self.writeTerminal()
         self.parseTreeFile.write("</term>\n")
 
     def compileSubroutineCall(self):
+        funcName = ""
+        funcName += self.tokenizer.identifier()
         self.writeTerminal()
         if self.tokenizer.tokenType() == "SYMBOL":
             if self.tokenizer.symbol() == "(":
                 self.writeTerminal()
-                self.compileExpressionList()
+                nArgs = self.compileExpressionList()
                 self.writeTerminal()
             elif self.tokenizer.symbol() == ".":
+                funcName += self.tokenizer.identifier()
+                self.writeTerminal()
+                funcName += self.tokenizer.identifier()
                 self.writeTerminal()
                 self.writeTerminal()
-                self.writeTerminal()
-                self.compileExpressionList()
+                nArgs = self.compileExpressionList()
                 self.writeTerminal()
             else:
                 raise Exception("Should never reach here")
+        self.vmWriter.writeCall(funcName, nArgs)
 
     def compileExpressionList(self):
         self.parseTreeFile.write("<expressionList>\n")

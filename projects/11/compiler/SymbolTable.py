@@ -11,11 +11,11 @@ class SymbolTable:
 
     def define(self, name, vartype, kind):
         if kind in ["STATIC", "FIELD"]:
-            self.globalScopeKindCount[kind] += 1
             self.globalScope[name] = {"type": vartype, "kind": kind, "index": self.globalScopeKindCount[kind]}
+            self.globalScopeKindCount[kind] += 1
         else:
-            self.localScopeKindCount[kind] += 1
             self.localScope[name] = {"type": vartype, "kind": kind, "index": self.localScopeKindCount[kind]}
+            self.localScopeKindCount[kind] += 1
 
     def varCount(self, kind):
         if kind in ["STATIC", "FIELD"]:
