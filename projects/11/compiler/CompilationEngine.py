@@ -85,6 +85,7 @@ class CompilationEngine:
     def compileClassVarDec(self):
         kind = self.tokenizer.keyWord().upper()
         varType = self.tokenizer.lookAheadOne()
+        self.writeTerminal()
         self.parseTreeFile.write("<classVarDec>\n")
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
@@ -125,12 +126,15 @@ class CompilationEngine:
                     nLocals += nNewLocals
                 elif self.tokenizer.keyWord() in ["let", "if", "while", "do", "return"]:
                     if not nLocalsCompiled:
+                        self.vmWriter.writeFunction(f"{self.className}.{funcName}", nLocals)
                         if self.funcType == "method":
-                            self.vmWriter.writeFunction(f"{self.className}.{funcName}", nLocals+1)
                             self.vmWriter.writePush("ARG", 0)
                             self.vmWriter.writePop("POINTER", 0)
-                        else:
-                            self.vmWriter.writeFunction(f"{self.className}.{funcName}", nLocals)
+                        elif self.funcType == "constructor":
+                            nFields = self.symbolTable.varCount("FIELD")
+                            self.vmWriter.writePush("CONST", nFields)
+                            self.vmWriter.writeCall("Memory.alloc", 1)
+                            self.vmWriter.writePop("POINTER", 0)
                         nLocalsCompiled = True
                     self.compileStatements()
                 else:    
@@ -207,19 +211,8 @@ class CompilationEngine:
     def compileDo(self):
         self.parseTreeFile.write("<doStatement>\n")
         self.writeTerminal()
-        funcName = ""
-        while True:
-            if self.tokenizer.tokenType() == "SYMBOL":
-                if self.tokenizer.symbol() == "(":
-                    self.writeTerminal()
-                    nArgs = self.compileExpressionList()
-                    self.writeTerminal()
-                if self.tokenizer.symbol() == ";":
-                    self.writeTerminal()
-                    break
-            funcName += self.tokenizer.identifier()
-            self.writeTerminal()
-        self.vmWriter.writeCall(funcName, nArgs)
+        self.compileSubroutineCall()
+        self.writeTerminal()
         self.vmWriter.writePop("TEMP", 0)
         self.parseTreeFile.write("</doStatement>\n")
 
@@ -241,6 +234,8 @@ class CompilationEngine:
                     self.writeTerminal()
                     break
             self.writeTerminal()
+        if kind == "FIELD":
+            kind = "THIS"
         self.vmWriter.writePop(kind, index)
         self.parseTreeFile.write("</letStatement>\n")
 
@@ -285,6 +280,7 @@ class CompilationEngine:
     def compileIf(self):
         self.nIf += 1
         nIf = self.nIf
+        elseStarted = False
         self.parseTreeFile.write("<ifStatement>\n")
         
         while True:
@@ -303,10 +299,15 @@ class CompilationEngine:
                         if self.tokenizer.symbol() == "else":
                             self.vmWriter.writeGoto("ifElseEnd" + str(nIf))
                             self.vmWriter.writeLabel("elseStart" + str(nIf))
+                            elseStarted = True
                             continue
                         else:
+                            if not elseStarted:
+                                self.vmWriter.writeLabel("elseStart" + str(nIf))
                             break
                     else:
+                        if not elseStarted:
+                            self.vmWriter.writeLabel("elseStart" + str(nIf))
                         break
             self.writeTerminal()
         self.vmWriter.writeLabel("ifElseEnd" + str(nIf))
@@ -358,7 +359,7 @@ class CompilationEngine:
                     self.vmWriter.writePush("CONST", 1)
                     self.vmWriter.writeArithmetic("neg")
                 elif self.tokenizer.keyWord() == "this":
-                    self.vmWriter.writePush("THIS", 0)
+                    self.vmWriter.writePush("POINTER", 0)
                 else:
                     raise Exception("Should never reach here")
             self.writeTerminal()
@@ -373,34 +374,58 @@ class CompilationEngine:
             else:
                 kind = self.symbolTable.kindOf(self.tokenizer.identifier())
                 index = self.symbolTable.indexOf(self.tokenizer.identifier())
+                if kind == "FIELD":
+                    kind = "THIS"
                 self.vmWriter.writePush(kind, index)
                 self.writeTerminal()
         self.parseTreeFile.write("</term>\n")
 
     def compileSubroutineCall(self):
         funcName = ""
-        funcName += self.tokenizer.identifier()
-        self.writeTerminal()
+        method = False
+        identifier = self.tokenizer.identifier()
+        varType = self.symbolTable.typeOf(identifier)
+        if varType == "NONE":
+            funcName += identifier
+            self.writeTerminal()
+        else:
+            funcName += varType
+            self.writeTerminal()
+            method = True
         if self.tokenizer.tokenType() == "SYMBOL":
-            if self.tokenizer.symbol() == "(":
-                self.writeTerminal()
-                nArgs = self.compileExpressionList()
-                self.writeTerminal()
-            elif self.tokenizer.symbol() == ".":
-                funcName += self.tokenizer.identifier()
+            if self.tokenizer.symbol() == ".":
+                funcName += self.tokenizer.symbol()
                 self.writeTerminal()
                 funcName += self.tokenizer.identifier()
                 self.writeTerminal()
                 self.writeTerminal()
-                nArgs = self.compileExpressionList()
+                nArgs = self.compileExpressionList(method = method, identifier=identifier)
+                self.writeTerminal()
+            elif self.tokenizer.symbol() == "(":
+                method = True # Is this always true? Can you call a non-method func like func()?
+                funcName = self.className + "." + funcName
+                self.writeTerminal()
+                nArgs = self.compileExpressionList(method = method, identifier=identifier)
                 self.writeTerminal()
             else:
                 raise Exception("Should never reach here")
         self.vmWriter.writeCall(funcName, nArgs)
 
-    def compileExpressionList(self):
+    def compileExpressionList(self, method, identifier):
         self.parseTreeFile.write("<expressionList>\n")
         nArgs = 0
+        if method:
+            kind = self.symbolTable.kindOf(identifier)
+            if kind == "FIELD":
+                kind = "THIS"
+                index = self.symbolTable.indexOf(identifier)
+            elif kind == "NONE":
+                kind = "POINTER"
+                index = 0
+            else:
+                index = self.symbolTable.indexOf(identifier)
+            self.vmWriter.writePush(kind, index)
+            nArgs += 1
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ",":
