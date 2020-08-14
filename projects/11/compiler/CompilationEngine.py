@@ -81,10 +81,13 @@ class CompilationEngine:
             else:
                 self.writeTerminal()
         self.parseTreeFile.write("</class>")
+        # print(self.symbolTable.localScope)
+        # print(self.symbolTable.globalScope)
 
     def compileClassVarDec(self):
         kind = self.tokenizer.keyWord().upper()
         varType = self.tokenizer.lookAheadOne()
+        self.writeTerminal()
         self.writeTerminal()
         self.parseTreeFile.write("<classVarDec>\n")
         while True:
@@ -174,6 +177,8 @@ class CompilationEngine:
         self.parseTreeFile.write("<varDec>\n")
         kind = "VAR"
         varType = self.tokenizer.lookAheadOne()
+        self.writeTerminal()
+        self.writeTerminal()
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == ";":
@@ -221,12 +226,20 @@ class CompilationEngine:
         self.writeTerminal()
         kind = self.symbolTable.kindOf(self.tokenizer.identifier())
         index = self.symbolTable.indexOf(self.tokenizer.identifier())
+        if kind == "FIELD":
+            kind = "THIS"
+        if self.tokenizer.lookAheadOne() == "[":
+            self.vmWriter.writePush(kind, index)
+            self.writeTerminal()
+            self.writeTerminal()
+            self.compileExpression(endTokens = ["]"])
+            self.vmWriter.writeArithmetic("add")
+            self.vmWriter.writePop("POINTER", 1)
+            self.writeTerminal()
+            kind = "THAT"
+            index = 0
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
-                if self.tokenizer.symbol() == "[":
-                    self.writeTerminal()
-                    self.compileExpression(endTokens = ["]"])
-                    self.writeTerminal()
                 if self.tokenizer.symbol() == "=":
                     self.writeTerminal()
                     self.compileExpression(endTokens = [";"])
@@ -234,8 +247,6 @@ class CompilationEngine:
                     self.writeTerminal()
                     break
             self.writeTerminal()
-        if kind == "FIELD":
-            kind = "THIS"
         self.vmWriter.writePop(kind, index)
         self.parseTreeFile.write("</letStatement>\n")
 
@@ -349,10 +360,16 @@ class CompilationEngine:
                 self.compileExpression(endTokens = [")"])
                 self.writeTerminal()
         elif self.tokenizer.tokenType() in ["KEYWORD", "STRING_CONST", "INT_CONST"]:
-            # Need to deal with string cases here as well
             if self.tokenizer.tokenType() == "INT_CONST":
                 self.vmWriter.writePush("CONST", self.tokenizer.intVal())
-            if self.tokenizer.tokenType() == "KEYWORD":
+            elif self.tokenizer.tokenType() == "STRING_CONST":
+                string = self.tokenizer.stringVal()
+                self.vmWriter.writePush("CONST", len(string))
+                self.vmWriter.writeCall("String.new", 1)
+                for char in string:
+                    self.vmWriter.writePush("CONST", ord(char))
+                    self.vmWriter.writeCall("String.appendChar", 2)
+            elif self.tokenizer.tokenType() == "KEYWORD":
                 if self.tokenizer.keyWord() in ["false", "null"]:
                     self.vmWriter.writePush("CONST", 0)
                 elif self.tokenizer.keyWord() == "true":
@@ -367,9 +384,17 @@ class CompilationEngine:
             if self.tokenizer.lookAheadOne() in ["(","."]:
                 self.compileSubroutineCall()
             elif self.tokenizer.lookAheadOne() == "[":
+                kind = self.symbolTable.kindOf(self.tokenizer.identifier())
+                index = self.symbolTable.indexOf(self.tokenizer.identifier())
+                if kind == "FIELD":
+                    kind = "THIS"
+                self.vmWriter.writePush(kind, index)
                 self.writeTerminal()
                 self.writeTerminal()
                 self.compileExpression(endTokens = ["]"])
+                self.vmWriter.writeArithmetic("add")
+                self.vmWriter.writePop("POINTER", 1)
+                self.vmWriter.writePush("THAT", 0)
                 self.writeTerminal()
             else:
                 kind = self.symbolTable.kindOf(self.tokenizer.identifier())

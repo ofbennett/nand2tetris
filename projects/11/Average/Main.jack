@@ -21,7 +21,7 @@ class Main {
         let sum = sum + a[i];
         let i = i + 1;
      }
-     
+   //   let sum = 10;
      do Output.printString("The average is ");
      do Output.printInt(sum / length);
      return;
