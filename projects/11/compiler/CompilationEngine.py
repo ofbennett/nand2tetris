@@ -228,6 +228,7 @@ class CompilationEngine:
         self.writeTerminal()
         kind = self.symbolTable.kindOf(self.tokenizer.identifier())
         index = self.symbolTable.indexOf(self.tokenizer.identifier())
+        ARRAY = False
         if kind == "FIELD":
             kind = "THIS"
         if self.tokenizer.lookAheadOne() == "[":
@@ -236,10 +237,9 @@ class CompilationEngine:
             self.writeTerminal()
             self.compileExpression(endTokens = ["]"])
             self.vmWriter.writeArithmetic("add")
-            self.vmWriter.writePop("POINTER", 1)
+            self.vmWriter.writePop("TEMP", 1)
             self.writeTerminal()
-            kind = "THAT"
-            index = 0
+            ARRAY = True
         while True:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "=":
@@ -249,6 +249,11 @@ class CompilationEngine:
                     self.writeTerminal()
                     break
             self.writeTerminal()
+        if ARRAY:
+            self.vmWriter.writePush("TEMP", 1)
+            self.vmWriter.writePop("POINTER", 1)
+            kind = "THAT"
+            index = 0
         self.vmWriter.writePop(kind, index)
         self.parseTreeFile.write("</letStatement>\n")
 
