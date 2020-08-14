@@ -115,6 +115,8 @@ class CompilationEngine:
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() == "(":
                     self.writeTerminal()
+                    if self.funcType == "method":
+                        self.symbolTable.localScopeKindCount["ARG"] = 1
                     self.compileParameterList()
                     self.writeTerminal()
                     self.parseTreeFile.write("<subroutineBody>\n")
