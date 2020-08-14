@@ -81,8 +81,6 @@ class CompilationEngine:
             else:
                 self.writeTerminal()
         self.parseTreeFile.write("</class>")
-        # print(self.symbolTable.localScope)
-        # print(self.symbolTable.globalScope)
 
     def compileClassVarDec(self):
         kind = self.tokenizer.keyWord().upper()
@@ -434,7 +432,7 @@ class CompilationEngine:
                 nArgs = self.compileExpressionList(method = method, identifier=identifier)
                 self.writeTerminal()
             elif self.tokenizer.symbol() == "(":
-                method = True # Is this always true? Can you call a non-method func like func()?
+                method = True # Assumes that only methods (not plain functions) can be called without the class name in front.
                 funcName = self.className + "." + funcName
                 self.writeTerminal()
                 nArgs = self.compileExpressionList(method = method, identifier=identifier)
