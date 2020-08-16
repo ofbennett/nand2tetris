@@ -79,15 +79,6 @@ class Screen {
         var int newX;
         var int newY;
 
-        if ( ((x1 > x2)|(x1 = x2)) & ((y1 > y2)|(y1 = y2)) ){
-            let a = x2;
-            let x2 = x1;
-            let x1 = a;
-            let a = y2;
-            let y2 = y1;
-            let y1 = a;
-        }
-
         let a = 0;
         let b = 0;
         let dx = x2 - x1;
