@@ -24,4 +24,4 @@ These are my solutions to the projects in the [Nand2Tetris](https://www.nand2tet
 
 :white_check_mark: Project 11: Compiler II: Code Generation
 
-:black_square_button: Project 12: Operating System
+:white_check_mark: Project 12: Operating System
