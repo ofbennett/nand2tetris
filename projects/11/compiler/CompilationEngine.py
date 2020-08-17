@@ -332,13 +332,20 @@ class CompilationEngine:
     def compileExpression(self, endTokens):
         self.parseTreeFile.write("<expression>\n")
         vmOpArray = []
+        EQUALITY = False
         self.compileTerm()
         while True:
+            if EQUALITY:
+                self.compileTerm()
+                EQUALITY = False
+                continue
             if self.tokenizer.tokenType() == "SYMBOL":
                 if self.tokenizer.symbol() in endTokens:
                     break
                 elif self.tokenizer.symbol() in CompilationEngine.ops:
                     vmOp = CompilationEngine.vmOps[self.tokenizer.symbol()]
+                    if vmOp == "eq":
+                        EQUALITY = True
                     vmOpArray.append(vmOp)
                     self.writeTerminal()
                 else:
