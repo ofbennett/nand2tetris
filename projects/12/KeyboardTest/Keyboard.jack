@@ -7,9 +7,16 @@
  * A library for handling user input from the keyboard.
  */
 class Keyboard {
+    static int mem;
+    static int keyboard;
+    static String buffer;
 
     /** Initializes the keyboard. */
     function void init() {
+        let mem = 0;
+        let keyboard = 24576;
+        let buffer = String.new(50);
+        return;
     } 
 
     /**
@@ -33,6 +40,7 @@ class Keyboard {
      * F1 - F12 = 141 - 152
      */
     function char keyPressed() {
+        return mem[keyboard];
     }
 
     /**								
@@ -41,6 +49,12 @@ class Keyboard {
      * of the pressed key.
      */
     function char readChar() {
+        var char c;
+        while(Keyboard.keyPressed()=0){}
+        let c = Keyboard.keyPressed();
+        while(~(Keyboard.keyPressed()=0)){}
+        do Output.printChar(c);
+        return c;
     }
 
     /**								
@@ -49,7 +63,31 @@ class Keyboard {
      * and returns its value. Also handles user backspaces.
      */
     function String readLine(String message) {
-    }   
+        var char c;
+        do Keyboard.clearBuffer();
+        do Output.printString(message);
+        while(true){
+            let c = Keyboard.readChar();
+            if (c = String.newLine()){
+                return buffer;
+            }
+            if (c = String.backSpace()){
+                if (buffer.length()>0){
+                    do buffer.eraseLastChar();
+                }
+            } else {
+                do buffer.appendChar(c);
+            }
+        }
+        return buffer;
+    }
+
+    function void clearBuffer(){
+        while(buffer.length()>0){
+            do buffer.eraseLastChar();
+        }
+        return;
+    }
 
     /**								
      * Displays the message on the screen, reads from the keyboard the entered
@@ -58,5 +96,22 @@ class Keyboard {
      * entered text is detected). Also handles user backspaces. 
      */
     function int readInt(String message) {
+        var char c;
+        do Keyboard.clearBuffer();
+        do Output.printString(message);
+        while(true){
+            let c = Keyboard.readChar();
+            if (c = String.newLine()){
+                return buffer.intValue();
+            }
+            if (c = String.backSpace()){
+                if (buffer.length()>0){
+                    do buffer.eraseLastChar();
+                }
+            } else {
+                do buffer.appendChar(c);
+            }
+        }
+        return buffer.intValue();
     }
 }
